@@ -4,7 +4,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
 	"schedulerTelegramBot/configs"
-	b "schedulerTelegramBot/pkg/telegram/bot"
+	b "schedulerTelegramBot/internal/telegram"
 )
 
 func main() {
