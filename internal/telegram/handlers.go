@@ -24,19 +24,36 @@ type QueueService interface {
 
 func (b *Bot) handleTextRequests(message *tgbotapi.Message) error {
 	msg := tgbotapi.NewMessage(message.Chat.ID, basicTextMessage)
+	redis := *b.redisRepo
+	state := redis.GetSession(message.Chat.ID).State
+	switch state {
+	case "started telegram bot":
+		msg.Text = startMessage
+	case "registration":
+		msg.Text = "registered"
+	default:
+		msg.Text = basicTextMessage
+	}
 	_, err := b.bot.Send(msg)
 	return err
 }
 
 func (b *Bot) handleCommandRequests(message *tgbotapi.Message) error {
 	msg := tgbotapi.NewMessage(message.Chat.ID, defaultMessage)
+	var keyboardBuilder = *b.keyboardBuilder
+	delegatedMessage := make(map[int64]string)
 	switch message.Command() {
 	case startCommand:
 		msg.Text = startMessage
+		delegatedMessage[message.Chat.ID] = "started telegram bot"
+		*b.channel <- delegatedMessage
 	case registerCommand:
 		msg.Text = registerMessage
-		delegatedMessage := make(map[int64]string)
-		delegatedMessage[message.Chat.ID] = message.Text
+		delegatedMessage[message.Chat.ID] = "registration"
+		*b.channel <- delegatedMessage
+		keyboardBuilder.BuildKeyboard(&msg, [][]string{{}})
+	default:
+		delegatedMessage[message.Chat.ID] = "unknown"
 		*b.channel <- delegatedMessage
 	}
 	_, err := b.bot.Send(msg)
