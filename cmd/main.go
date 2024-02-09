@@ -13,17 +13,17 @@ func main() {
 	c := context.Background()
 	configs := configs.GetInstance()
 	redisConfigs := configs.Redis
-	var channel = make(chan string)
-	redisDB := redisRepo.NewRedisDB(&c, &channel, redisConfigs)
-	go redisDB.StartReading()
+	var redisDB b.RedisRepo
+	redisDB = redisRepo.NewRedisDB(&c, redisConfigs)
 	bot, err := tgbotapi.NewBotAPI(configs.Bot.Token)
 	if err != nil {
 		log.Fatal(err)
 	}
-	v := make(chan string)
-	go b.Read(v)
+	v := make(chan map[int64]string)
+
 	bot.Debug = true
-	telegramBot := b.NewBot(bot, &v)
+	telegramBot := b.NewBot(bot, &v, &redisDB)
+	go telegramBot.Read(v)
 	err = telegramBot.StartBot()
 	if err != nil {
 		log.Fatal(err)
