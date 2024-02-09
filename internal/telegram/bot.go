@@ -7,7 +7,9 @@ import (
 )
 
 type KeyboardBuilder interface {
-	BuildKeyboard(message *tgbotapi.MessageConfig, rows [][]string)
+	ManageSettings(key string, value string)
+
+	BuildKeyboard(message *tgbotapi.MessageConfig, rows []string)
 }
 
 type RedisRepo interface {

@@ -10,7 +10,19 @@ func NewKeyBoardBuilderService(settings map[string]string) *KeyBoardBuilderServi
 	return &KeyBoardBuilderService{settings: settings}
 }
 
-func (k KeyBoardBuilderService) BuildKeyboard(message *tgbotapi.MessageConfig, rows [][]string) {
-	var button = tgbotapi.NewKeyboardButton("wewrggerre")
-	message.ReplyMarkup = tgbotapi.NewReplyKeyboard([]tgbotapi.KeyboardButton{button})
+func (k *KeyBoardBuilderService) BuildKeyboard(message *tgbotapi.MessageConfig, rows []string) {
+	var buttons []tgbotapi.KeyboardButton
+
+	for _, row := range rows {
+		buttons = append(buttons, tgbotapi.NewKeyboardButton(row))
+	}
+	var keyboard = tgbotapi.NewReplyKeyboard(buttons)
+	keyboard.OneTimeKeyboard = true
+	message.ReplyMarkup = keyboard
+
+	//TODO add implementation for InlineKeyboardMarkup
+}
+
+func (k *KeyBoardBuilderService) ManageSettings(key string, value string) {
+	//TODO implement keyBoard management
 }

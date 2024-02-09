@@ -19,6 +19,12 @@ const (
 	adminMessage     = "Unimplemented!"
 )
 
+const (
+	startState   = "started telegram bot"
+	regState     = "registration"
+	unknownState = "unknown"
+)
+
 type QueueService interface {
 }
 
@@ -27,10 +33,10 @@ func (b *Bot) handleTextRequests(message *tgbotapi.Message) error {
 	redis := *b.redisRepo
 	state := redis.GetSession(message.Chat.ID).State
 	switch state {
-	case "started telegram bot":
+	case startState:
 		msg.Text = startMessage
-	case "registration":
-		msg.Text = "registered"
+	case regState:
+		msg.Text = registerMessage
 	default:
 		msg.Text = basicTextMessage
 	}
@@ -51,9 +57,9 @@ func (b *Bot) handleCommandRequests(message *tgbotapi.Message) error {
 		msg.Text = registerMessage
 		delegatedMessage[message.Chat.ID] = "registration"
 		*b.channel <- delegatedMessage
-		keyboardBuilder.BuildKeyboard(&msg, [][]string{{}})
+		keyboardBuilder.BuildKeyboard(&msg, []string{"oijuhg", "gyhuji", "YGHUj"})
 	default:
-		delegatedMessage[message.Chat.ID] = "unknown"
+		delegatedMessage[message.Chat.ID] = unknownState
 		*b.channel <- delegatedMessage
 	}
 	_, err := b.bot.Send(msg)
