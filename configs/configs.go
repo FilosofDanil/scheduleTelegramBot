@@ -8,6 +8,7 @@ import (
 type Configurations struct {
 	Server ServerConfigs
 	Bot    BotConfigs
+	Redis  RedisConfigs
 }
 
 type ServerConfigs struct {
@@ -17,6 +18,13 @@ type ServerConfigs struct {
 type BotConfigs struct {
 	Name  string
 	Token string
+}
+
+type RedisConfigs struct {
+	Hostname string
+	Port     string
+	Username string
+	Password string
 }
 
 var instantiated *Configurations = nil
