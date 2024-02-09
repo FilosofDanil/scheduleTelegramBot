@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"golang.org/x/exp/maps"
 	"schedulerTelegramBot/internal/redisRepo"
@@ -26,6 +27,11 @@ const (
 )
 
 type QueueService interface {
+	PutInQueue(message *tgbotapi.Message)
+
+	PollFromQueue()
+
+	GetBackChannel() *chan string
 }
 
 func (b *Bot) handleTextRequests(message *tgbotapi.Message) error {
@@ -37,6 +43,10 @@ func (b *Bot) handleTextRequests(message *tgbotapi.Message) error {
 		msg.Text = startMessage
 	case regState:
 		msg.Text = registerMessage
+		var service = *b.s
+		go service.PutInQueue(message)
+		var channel = service.GetBackChannel()
+		go b.ReadFromQueue(channel)
 	default:
 		msg.Text = basicTextMessage
 	}
@@ -76,6 +86,17 @@ func (b *Bot) Read(ch chan map[int64]string) {
 				var session = &redisRepo.Session{ChatId: val, State: v[val]}
 				go redis.StartReading(val, session)
 			}
+		default:
+			time.Sleep(3 * time.Second)
+		}
+	}
+}
+
+func (b *Bot) ReadFromQueue(channel *chan string) {
+	for {
+		select {
+		case v := <-*channel:
+			fmt.Println(v)
 		default:
 			time.Sleep(3 * time.Second)
 		}

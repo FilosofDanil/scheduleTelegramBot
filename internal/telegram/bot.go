@@ -26,10 +26,10 @@ type Bot struct {
 	channel         *chan map[int64]string
 }
 
-func NewBot(bot *tgbotapi.BotAPI, ch *chan map[int64]string, redis *RedisRepo) *Bot {
+func NewBot(bot *tgbotapi.BotAPI, ch *chan map[int64]string, redis *RedisRepo, qs *QueueService) *Bot {
 	var keyboardBuilder KeyboardBuilder
 	keyboardBuilder = NewKeyBoardBuilderService(make(map[string]string))
-	return &Bot{bot: bot, redisRepo: redis, channel: ch, keyboardBuilder: &keyboardBuilder}
+	return &Bot{bot: bot, redisRepo: redis, channel: ch, keyboardBuilder: &keyboardBuilder, s: qs}
 }
 
 func (b *Bot) StartBot() error {

@@ -5,7 +5,7 @@ import (
 )
 
 type User struct {
-	ChatId       string
+	ChatId       int64
 	Username     string
 	PlaceInQueue int
 }

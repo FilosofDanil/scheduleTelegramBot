@@ -5,7 +5,9 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
 	"schedulerTelegramBot/configs"
+	"schedulerTelegramBot/internal/queue"
 	"schedulerTelegramBot/internal/redisRepo"
+	"schedulerTelegramBot/internal/services"
 	b "schedulerTelegramBot/internal/telegram"
 )
 
@@ -20,9 +22,13 @@ func main() {
 		log.Fatal(err)
 	}
 	v := make(chan map[int64]string)
-
+	backChannel := make(chan string)
+	userChan := make(chan queue.User)
 	bot.Debug = true
-	telegramBot := b.NewBot(bot, &v, &redisDB)
+	var queueService b.QueueService
+	queueService = &services.QueueService{Queue: queue.NewQueue(), Channel: &userChan, BackChannel: &backChannel}
+	go queueService.PollFromQueue()
+	telegramBot := b.NewBot(bot, &v, &redisDB, &queueService)
 	go telegramBot.Read(v)
 	err = telegramBot.StartBot()
 	if err != nil {
