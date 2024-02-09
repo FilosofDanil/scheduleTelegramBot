@@ -6,6 +6,12 @@ import (
 	"schedulerTelegramBot/internal/redisRepo"
 )
 
+type KeyboardBuilder interface {
+	ManageSettings(key string, value string)
+
+	BuildKeyboard(message *tgbotapi.MessageConfig, rows []string)
+}
+
 type RedisRepo interface {
 	StartReading(key int64, session *redisRepo.Session)
 
@@ -13,14 +19,17 @@ type RedisRepo interface {
 }
 
 type Bot struct {
-	bot       *tgbotapi.BotAPI
-	s         *QueueService
-	redisRepo *RedisRepo
-	channel   *chan map[int64]string
+	bot             *tgbotapi.BotAPI
+	s               *QueueService
+	keyboardBuilder *KeyboardBuilder
+	redisRepo       *RedisRepo
+	channel         *chan map[int64]string
 }
 
 func NewBot(bot *tgbotapi.BotAPI, ch *chan map[int64]string, redis *RedisRepo) *Bot {
-	return &Bot{bot: bot, redisRepo: redis, channel: ch}
+	var keyboardBuilder KeyboardBuilder
+	keyboardBuilder = NewKeyBoardBuilderService(make(map[string]string))
+	return &Bot{bot: bot, redisRepo: redis, channel: ch, keyboardBuilder: &keyboardBuilder}
 }
 
 func (b *Bot) StartBot() error {
