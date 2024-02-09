@@ -3,15 +3,24 @@ package telegram
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
+	"schedulerTelegramBot/internal/redisRepo"
 )
 
-type Bot struct {
-	bot *tgbotapi.BotAPI
-	s   QueueService
+type RedisRepo interface {
+	StartReading(key int64, session *redisRepo.Session)
+
+	GetSession(key int64) (session *redisRepo.Session)
 }
 
-func NewBot(bot *tgbotapi.BotAPI) *Bot {
-	return &Bot{bot: bot}
+type Bot struct {
+	bot       *tgbotapi.BotAPI
+	s         *QueueService
+	redisRepo *RedisRepo
+	channel   *chan map[int64]string
+}
+
+func NewBot(bot *tgbotapi.BotAPI, ch *chan map[int64]string, redis *RedisRepo) *Bot {
+	return &Bot{bot: bot, redisRepo: redis, channel: ch}
 }
 
 func (b *Bot) StartBot() error {
@@ -28,9 +37,15 @@ func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
 	for update := range updates {
 		if update.Message != nil { // If we got a message
 			if update.Message.IsCommand() {
-				b.handleCommandRequests(update.Message)
+				err := b.handleCommandRequests(update.Message)
+				if err != nil {
+					return
+				}
 			} else {
-				b.handleTextRequests(update.Message)
+				err := b.handleTextRequests(update.Message)
+				if err != nil {
+					return
+				}
 			}
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 			//
