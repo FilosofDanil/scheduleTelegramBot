@@ -47,3 +47,19 @@ func (rdb *RedisDB) StartReading(key int64, session *Session) {
 	}
 	return
 }
+
+func (rdb *RedisDB) GetSession(key int64) *Session {
+	var c = *rdb.ctx
+	var session Session
+	err := rdb.client.HGetAll(c, "session:"+strconv.FormatInt(key, 10)).Scan(&session)
+	if err != nil {
+		rdb.errCounter++
+		if rdb.errCounter >= 5 {
+			panic(err)
+		}
+		go rdb.GetSession(key)
+	} else {
+		rdb.errCounter = 0
+	}
+	return &session
+}

@@ -8,6 +8,8 @@ import (
 
 type RedisRepo interface {
 	StartReading(key int64, session *redisRepo.Session)
+
+	GetSession(key int64) (session *redisRepo.Session)
 }
 
 type Bot struct {
