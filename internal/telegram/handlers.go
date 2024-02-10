@@ -1,9 +1,9 @@
 package telegram
 
 import (
-	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"golang.org/x/exp/maps"
+	"schedulerTelegramBot/internal/queue"
 	"schedulerTelegramBot/internal/redisRepo"
 	"time"
 )
@@ -31,7 +31,11 @@ type QueueService interface {
 
 	PollFromQueue()
 
-	GetBackChannel() *chan string
+	ReadDataFromQueue()
+
+	GetBackChannel() *chan queue.User
+
+	GetNotificationChannel() *chan queue.User
 }
 
 func (b *Bot) handleTextRequests(message *tgbotapi.Message) error {
@@ -92,11 +96,12 @@ func (b *Bot) Read(ch chan map[int64]string) {
 	}
 }
 
-func (b *Bot) ReadFromQueue(channel *chan string) {
+func (b *Bot) ReadFromQueue(channel *chan queue.User) {
 	for {
 		select {
 		case v := <-*channel:
-			fmt.Println(v)
+			msg := tgbotapi.NewMessage(v.ChatId, v.Message)
+			b.bot.Send(msg)
 		default:
 			time.Sleep(3 * time.Second)
 		}

@@ -8,6 +8,7 @@ type User struct {
 	ChatId       int64
 	Username     string
 	PlaceInQueue int
+	Message      string
 }
 
 type Queue struct {
