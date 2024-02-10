@@ -51,6 +51,7 @@ func (b *Bot) handleTextRequests(message *tgbotapi.Message) error {
 		go service.PutInQueue(message)
 		var channel = service.GetBackChannel()
 		go b.ReadFromQueue(channel)
+		go b.ReadFromQueue(service.GetNotificationChannel())
 	default:
 		msg.Text = basicTextMessage
 	}

@@ -25,14 +25,15 @@ func main() {
 	backChannel := make(chan queue.User)
 	userChan := make(chan queue.User)
 	notificationsChan := make(chan queue.User)
+	secondaryChan := make(chan queue.User)
 	bot.Debug = true
 	var queueService b.QueueService
-	queueService = &services.QueueService{Queue: queue.NewQueue(), Channel: &userChan, BackChannel: &backChannel, NotificationChannel: &notificationsChan}
+	queueService = &services.QueueService{Queue: queue.NewQueue(), Channel: &userChan, BackChannel: &backChannel, NotificationChannel: &notificationsChan, SecondaryNotificationChannel: &secondaryChan}
 	go queueService.PollFromQueue()
 	go queueService.ReadDataFromQueue()
 	telegramBot := b.NewBot(bot, &v, &redisDB, &queueService)
 	go telegramBot.Read(v)
-	go telegramBot.ReadFromQueue(&notificationsChan)
+	go telegramBot.ReadFromQueue(&secondaryChan)
 	err = telegramBot.StartBot()
 	if err != nil {
 		log.Fatal(err)

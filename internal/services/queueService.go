@@ -4,14 +4,16 @@ import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"schedulerTelegramBot/internal/queue"
+	"strconv"
 	"time"
 )
 
 type QueueService struct {
-	Queue               *queue.Queue
-	Channel             *chan queue.User
-	BackChannel         *chan queue.User
-	NotificationChannel *chan queue.User
+	Queue                        *queue.Queue
+	Channel                      *chan queue.User
+	BackChannel                  *chan queue.User
+	NotificationChannel          *chan queue.User
+	SecondaryNotificationChannel *chan queue.User
 }
 
 func (s *QueueService) PollFromQueue() {
@@ -44,8 +46,13 @@ func (s *QueueService) PutInQueue(message *tgbotapi.Message) {
 
 func (s *QueueService) ReadDataFromQueue() {
 	for {
-		time.Sleep(30 * time.Second)
+		time.Sleep(90 * time.Second)
 		var user, _ = s.Queue.Dequeue()
+		var usersList = s.Queue.Arr()
+		for _, u := range usersList {
+			u.Message = "Your place in queue: " + strconv.Itoa(s.Queue.Length())
+			*s.SecondaryNotificationChannel <- u
+		}
 		fmt.Println("test")
 		fmt.Println(user)
 		user.Message = "Your time!"
