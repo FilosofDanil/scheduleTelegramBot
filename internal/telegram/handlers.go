@@ -85,6 +85,7 @@ func (b *Bot) handleTextRequests(message *tgbotapi.Message) error {
 			delegatedMessage := make(map[int64]string)
 			delegatedMessage[message.Chat.ID] = adminWaitForUIIDState
 			*b.channel <- delegatedMessage
+			break
 		case "No":
 			msg.Text = adminNoOptionMessage
 		}

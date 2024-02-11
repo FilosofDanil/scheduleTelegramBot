@@ -10,26 +10,28 @@ import (
 
 type EmailSender struct {
 	configurations configs.EmailConfigs
-	id             uuid.UUID
+	id             string
 }
 
-func (e EmailSender) SendMail() error {
+func (e *EmailSender) SendMail() error {
 	// Sender data.
 	from := e.configurations.Sender
 	password := e.configurations.Password
 	id := uuid.New()
-	e.id = id
+	e.id = id.String()
+	fmt.Println(id.String())
+	fmt.Println(e.id)
 	// Receiver email address.
 	to := []string{
 		e.configurations.Receiver,
 	}
-
 	// smtp server configuration.
 	smtpHost := e.configurations.SmtpHost
 	smtpPort := e.configurations.SmtpPort
 
 	// Message.
-	message := []byte("Test message")
+
+	message := []byte("Verification code: " + id.String())
 
 	// Authentication.
 	auth := smtp.PlainAuth("", from, password, smtpHost)
@@ -43,8 +45,10 @@ func (e EmailSender) SendMail() error {
 	return nil
 }
 
-func (e EmailSender) CheckUUID(idFromMessage string) error {
-	if e.id.String() != idFromMessage {
+func (e *EmailSender) CheckUUID(idFromMessage string) error {
+	fmt.Println(e.id)
+	fmt.Println(idFromMessage)
+	if e.id != idFromMessage {
 		return errors.New("incorrect uuid")
 	}
 	return nil
