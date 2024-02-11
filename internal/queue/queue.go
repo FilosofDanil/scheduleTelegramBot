@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -33,9 +34,29 @@ func (q *Queue) Enqueue(value User) {
 	q.length += 1
 }
 
+func (q *Queue) DeleteFromQueueByChatId(chatId int64) error {
+	var i int
+	var present = false
+	for j, u := range q.arr {
+		if u.ChatId == chatId {
+			i = j
+			present = true
+			break
+		}
+	}
+	if !present {
+		return errors.New("no value present")
+	}
+	q.arr[i] = q.arr[len(q.arr)-1]
+	q.arr[len(q.arr)-1] = User{}
+	q.arr = q.arr[:len(q.arr)-1]
+	q.length--
+	return nil
+}
+
 func (q *Queue) Dequeue() (User, error) {
 	if q.length == 0 {
-		return User{}, fmt.Errorf("Queue is empty")
+		return User{}, fmt.Errorf("queue is empty")
 	}
 	value := (q.arr)[0]
 	q.arr = (q.arr)[1:]

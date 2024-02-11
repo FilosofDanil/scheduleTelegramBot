@@ -13,11 +13,11 @@ import (
 
 func main() {
 	c := context.Background()
-	configs := configs.GetInstance()
-	redisConfigs := configs.Redis
+	configurations := configs.GetInstance()
+	redisConfigs := configurations.Redis
 	var redisDB b.RedisRepo
 	redisDB = redisRepo.NewRedisDB(&c, redisConfigs)
-	bot, err := tgbotapi.NewBotAPI(configs.Bot.Token)
+	bot, err := tgbotapi.NewBotAPI(configurations.Bot.Token)
 	if err != nil {
 		log.Fatal(err)
 	}

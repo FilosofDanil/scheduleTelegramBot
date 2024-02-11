@@ -22,7 +22,8 @@ func (s *QueueService) PollFromQueue() {
 		case v := <-*s.Channel:
 			fmt.Println(v)
 			time.Sleep(10 * time.Second)
-			v.Message = "backLog: " + v.Username
+			v.Message = "Congratulations, user: " + v.Username + "\n You're successfully putted in the queue! Now have" +
+				" a bit of patience and wait for your turn, your current place in the queue(people after you): " + strconv.Itoa(s.Queue.Length()-1)
 			*s.BackChannel <- v
 		default:
 			time.Sleep(3 * time.Second)
@@ -49,13 +50,19 @@ func (s *QueueService) ReadDataFromQueue() {
 		time.Sleep(90 * time.Second)
 		var user, _ = s.Queue.Dequeue()
 		var usersList = s.Queue.Arr()
-		for _, u := range usersList {
-			u.Message = "Your place in queue: " + strconv.Itoa(s.Queue.Length())
+		for i, u := range usersList {
+			u.Message = "Queue change log, your place in queue(people after you):  " + strconv.Itoa(i)
 			*s.SecondaryNotificationChannel <- u
 		}
-		fmt.Println("test")
-		fmt.Println(user)
-		user.Message = "Your time!"
+		user.Message = "User: " + user.Username + "\nNow it's your turn in queue! Please follow the further instructions. "
 		*s.NotificationChannel <- user
 	}
+}
+
+func (s *QueueService) DeleteFromQueue(message *tgbotapi.Message) error {
+	err := s.Queue.DeleteFromQueueByChatId(message.Chat.ID)
+	if err != nil {
+		return err
+	}
+	return nil
 }
