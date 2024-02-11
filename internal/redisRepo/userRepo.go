@@ -27,10 +27,6 @@ func NewRedisDB(ctx *context.Context, conf configs.RedisConfigs) *RedisDB {
 	return &RedisDB{ctx: ctx, client: rdb, errCounter: 0}
 }
 
-func NewSession(chatId int64, state string) *Session {
-	return &Session{ChatId: chatId, State: state}
-}
-
 func (rdb *RedisDB) StartReading(key int64, session *Session) {
 	var c = *rdb.ctx
 	_, err := rdb.client.HSet(c, "session:"+strconv.FormatInt(key, 10), session).Result()
