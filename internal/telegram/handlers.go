@@ -19,20 +19,25 @@ const (
 	registerMessage                     = "Hello! Are you sure about putting yourself in the queue, please confirm it in the provided tab below"
 	basicTextMessage                    = "It's not allowed here!"
 	leaveMessage                        = "Okay! You still can logout from queue in any time you prefer!"
-	adminMessage                        = "Unimplemented!"
+	adminMessage                        = "Are you sure, that you would like to log in into admin tab?"
 	registrationNoOption                = "Okay! You still can register in the queue in every convenient time!"
 	registrationYesOption               = "Okay! Wait for server answer..."
 	deleteFromQueueButNotPresentMessage = "You haven't login in any queue yet!"
 	deleteFromQueueMessage              = "Are you sure, that you would like to leave the queue(this action cannot be canceled), please confirm it in the provided tab below"
 	deleteFromQueueSuccessMessage       = "Successfully deleted from queue. You always have an opportunity to login in the queue in any time!"
+	adminYesOptionMessage               = "Okay, the verification id has sent on your commerce email, please check oit and send back in the chat!"
+	adminNoOptionMessage                = "Okay, You still can log in admin tab in every convenient time!"
+	adminSuccessfully                   = "Congratulations! You have successfully authorized!"
+	adminUnSuccessfully                 = "Given uuid is wrong!"
 )
 
 const (
-	startState   = "started telegram bot"
-	regState     = "registration"
-	unknownState = "unknown"
-	logoutState  = "logout"
-	adminState   = "admin"
+	startState            = "started telegram bot"
+	regState              = "registration"
+	unknownState          = "unknown"
+	logoutState           = "logout"
+	adminState            = "admin"
+	adminWaitForUIIDState = "adminWait"
 )
 
 var (
@@ -53,17 +58,48 @@ type QueueService interface {
 	GetNotificationChannel() *chan queue.User
 }
 
+type EmailService interface {
+	SendMail() error
+
+	CheckUUID(idFromMessage string) error
+}
+
 func (b *Bot) handleTextRequests(message *tgbotapi.Message) error {
 	msg := tgbotapi.NewMessage(message.Chat.ID, basicTextMessage)
 	redis := *b.redisRepo
 	state := redis.GetSession(message.Chat.ID).State
+	var emailService = *b.emailService
 	switch state {
 	case startState:
 		msg.Text = startMessage
+	case adminState:
+		switch message.Text {
+		case "Yes":
+			msg.Text = adminYesOptionMessage
+			go func() {
+				err := emailService.SendMail()
+				if err != nil {
+					zap.L().Error(err.Error())
+				}
+			}()
+			delegatedMessage := make(map[int64]string)
+			delegatedMessage[message.Chat.ID] = adminWaitForUIIDState
+			*b.channel <- delegatedMessage
+		case "No":
+			msg.Text = adminNoOptionMessage
+		}
+	case adminWaitForUIIDState:
+		err := emailService.CheckUUID(message.Text)
+		if err != nil {
+			zap.L().Error(err.Error())
+			msg.Text = adminUnSuccessfully
+		} else {
+			msg.Text = adminSuccessfully
+		}
 	case regState:
 		switch message.Text {
 		case "Yes":
-			var service = *b.s
+			var service = *b.queueService
 			go service.PutInQueue(message)
 			var channel = service.GetBackChannel()
 			go b.ReadFromQueue(channel)
@@ -75,7 +111,7 @@ func (b *Bot) handleTextRequests(message *tgbotapi.Message) error {
 	case logoutState:
 		switch message.Text {
 		case "Yes":
-			var service = *b.s
+			var service = *b.queueService
 			err := service.DeleteFromQueue(message)
 			if err != nil {
 				msg.Text = deleteFromQueueButNotPresentMessage
@@ -108,7 +144,8 @@ func (b *Bot) handleCommandRequests(message *tgbotapi.Message) error {
 		msg.Text = deleteFromQueueMessage
 		delegatedMessage[message.Chat.ID] = logoutState
 	case adminCommand:
-		msg.Text = adminCommand
+		msg.Text = adminMessage
+		keyboardBuilder.BuildKeyboard(&msg, optionsYesNoKeyboard)
 		delegatedMessage[message.Chat.ID] = adminState
 	default:
 		delegatedMessage[message.Chat.ID] = unknownState
