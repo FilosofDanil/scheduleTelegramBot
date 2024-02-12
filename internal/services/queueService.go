@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"schedulerTelegramBot/internal/queue"
@@ -45,24 +46,37 @@ func (s *QueueService) PutInQueue(message *tgbotapi.Message) {
 	*s.Channel <- user
 }
 
-func (s *QueueService) ReadDataFromQueue() {
-	for {
-		time.Sleep(90 * time.Second)
-		var user, _ = s.Queue.Dequeue()
-		var usersList = s.Queue.Arr()
-		for i, u := range usersList {
-			u.Message = "Queue change log, your place in queue(people after you):  " + strconv.Itoa(i)
-			*s.SecondaryNotificationChannel <- u
-		}
-		user.Message = "User: " + user.Username + "\nNow it's your turn in queue! Please follow the further instructions. "
-		*s.NotificationChannel <- user
+func (s *QueueService) ReadDataFromQueue() string {
+	//for {
+	//	time.Sleep(90 * time.Second)
+	if s.Queue.Length() == 0 {
+		return "The queue is empty"
 	}
+	var user, _ = s.Queue.Dequeue()
+	var usersList = s.Queue.Arr()
+	for i, u := range usersList {
+		u.Message = "Queue change log, your place in queue(people after you):  " + strconv.Itoa(i)
+		*s.SecondaryNotificationChannel <- u
+	}
+	user.Message = "User: " + user.Username + "\nNow it's your turn in queue! Please follow the further instructions. "
+	*s.NotificationChannel <- user
+	//}
+	return "Chosen user from queue: " + user.Username + "\nCurrent queue length: " + strconv.Itoa(s.Queue.Length())
 }
 
 func (s *QueueService) DeleteFromQueue(message *tgbotapi.Message) error {
 	err := s.Queue.DeleteFromQueueByChatId(message.Chat.ID)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (s *QueueService) CheckUser(message *tgbotapi.Message) error {
+	for _, u := range s.Queue.Arr() {
+		if u.ChatId == message.Chat.ID {
+			return errors.New("user already login in the queue")
+		}
 	}
 	return nil
 }

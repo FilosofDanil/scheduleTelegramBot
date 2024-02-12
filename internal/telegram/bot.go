@@ -20,16 +20,17 @@ type RedisRepo interface {
 
 type Bot struct {
 	bot             *tgbotapi.BotAPI
-	s               *QueueService
+	queueService    *QueueService
+	emailService    *EmailService
 	keyboardBuilder *KeyboardBuilder
 	redisRepo       *RedisRepo
 	channel         *chan map[int64]string
 }
 
-func NewBot(bot *tgbotapi.BotAPI, ch *chan map[int64]string, redis *RedisRepo, qs *QueueService) *Bot {
+func NewBot(bot *tgbotapi.BotAPI, ch *chan map[int64]string, redis *RedisRepo, qs *QueueService, es *EmailService) *Bot {
 	var keyboardBuilder KeyboardBuilder
 	keyboardBuilder = NewKeyBoardBuilderService(make(map[string]string))
-	return &Bot{bot: bot, redisRepo: redis, channel: ch, keyboardBuilder: &keyboardBuilder, s: qs}
+	return &Bot{bot: bot, redisRepo: redis, channel: ch, keyboardBuilder: &keyboardBuilder, queueService: qs, emailService: es}
 }
 
 func (b *Bot) StartBot() error {

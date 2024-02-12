@@ -9,6 +9,7 @@ type Configurations struct {
 	Server ServerConfigs
 	Bot    BotConfigs
 	Redis  RedisConfigs
+	Email  EmailConfigs
 }
 
 type ServerConfigs struct {
@@ -27,6 +28,14 @@ type RedisConfigs struct {
 	Password string
 }
 
+type EmailConfigs struct {
+	Sender   string
+	Receiver string
+	Password string
+	SmtpHost string
+	SmtpPort string
+}
+
 var instantiated *Configurations = nil
 
 func GetInstance() *Configurations {
@@ -42,7 +51,6 @@ func GetInstance() *Configurations {
 		if err := viper.Unmarshal(&instantiated); err != nil {
 			fmt.Printf("Unable to decode into struct, %v", err)
 		}
-
 	}
 	return instantiated
 }
