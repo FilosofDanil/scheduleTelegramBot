@@ -22,6 +22,7 @@ const (
 	adminMessage                        = "Are you sure, that you would like to log in into admin tab?"
 	registrationNoOption                = "Okay! You still can register in the queue in every convenient time!"
 	registrationYesOption               = "Okay! Wait for server answer..."
+	registrationAlreadyExists           = "You have already login in the queue!"
 	deleteFromQueueButNotPresentMessage = "You haven't login in any queue yet!"
 	deleteFromQueueMessage              = "Are you sure, that you would like to leave the queue(this action cannot be canceled), please confirm it in the provided tab below"
 	deleteFromQueueSuccessMessage       = "Successfully deleted from queue. You always have an opportunity to login in the queue in any time!"
@@ -29,6 +30,8 @@ const (
 	adminNoOptionMessage                = "Okay, You still can log in admin tab in every convenient time!"
 	adminSuccessfully                   = "Congratulations! You have successfully authorized!"
 	adminUnSuccessfully                 = "Given uuid is wrong!"
+	unimplemented                       = "Unimplemented!"
+	leftAdminTab                        = "You have successfully left the admin tab"
 )
 
 const (
@@ -38,10 +41,12 @@ const (
 	logoutState           = "logout"
 	adminState            = "admin"
 	adminWaitForUIIDState = "adminWait"
+	adminTabState         = "adminTab"
 )
 
 var (
 	optionsYesNoKeyboard = []string{"Yes", "No"}
+	optionsTabKeyboard   = []string{"Check Queue", "Create a new queue", "Choose next user", "Leave admin Tab"}
 )
 
 type QueueService interface {
@@ -49,9 +54,11 @@ type QueueService interface {
 
 	PollFromQueue()
 
-	ReadDataFromQueue()
+	ReadDataFromQueue() string
 
 	DeleteFromQueue(message *tgbotapi.Message) error
+
+	CheckUser(message *tgbotapi.Message) error
 
 	GetBackChannel() *chan queue.User
 
@@ -69,6 +76,8 @@ func (b *Bot) handleTextRequests(message *tgbotapi.Message) error {
 	redis := *b.redisRepo
 	state := redis.GetSession(message.Chat.ID).State
 	var emailService = *b.emailService
+	var keyboardBuilder = *b.keyboardBuilder
+	delegatedMessage := make(map[int64]string)
 	switch state {
 	case startState:
 		msg.Text = startMessage
@@ -82,7 +91,6 @@ func (b *Bot) handleTextRequests(message *tgbotapi.Message) error {
 					zap.L().Error(err.Error())
 				}
 			}()
-			delegatedMessage := make(map[int64]string)
 			delegatedMessage[message.Chat.ID] = adminWaitForUIIDState
 			*b.channel <- delegatedMessage
 			break
@@ -95,12 +103,40 @@ func (b *Bot) handleTextRequests(message *tgbotapi.Message) error {
 			zap.L().Error(err.Error())
 			msg.Text = adminUnSuccessfully
 		} else {
+			delegatedMessage[message.Chat.ID] = adminTabState
+			*b.channel <- delegatedMessage
+			keyboardBuilder.BuildKeyboard(&msg, optionsTabKeyboard)
 			msg.Text = adminSuccessfully
+			break
+		}
+	case adminTabState:
+		switch message.Text {
+		case "Check Queue":
+			msg.Text = unimplemented
+			keyboardBuilder.BuildKeyboard(&msg, optionsTabKeyboard)
+		case "Create a new queue":
+			msg.Text = unimplemented
+			keyboardBuilder.BuildKeyboard(&msg, optionsTabKeyboard)
+		case "Choose next user":
+			qs := *b.queueService
+			msg.Text = qs.ReadDataFromQueue()
+			keyboardBuilder.BuildKeyboard(&msg, optionsTabKeyboard)
+		case "Leave admin Tab":
+			msg.Text = leftAdminTab
+			delegatedMessage[message.Chat.ID] = startState
+			*b.channel <- delegatedMessage
+		default:
+			msg.Text = basicTextMessage
 		}
 	case regState:
 		switch message.Text {
 		case "Yes":
 			var service = *b.queueService
+			err := service.CheckUser(message)
+			if err != nil {
+				msg.Text = registrationAlreadyExists
+				break
+			}
 			go service.PutInQueue(message)
 			var channel = service.GetBackChannel()
 			go b.ReadFromQueue(channel)

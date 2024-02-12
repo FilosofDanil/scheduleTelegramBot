@@ -33,7 +33,7 @@ func main() {
 	var queueService b.QueueService
 	queueService = &services.QueueService{Queue: queue.NewQueue(), Channel: &userChan, BackChannel: &backChannel, NotificationChannel: &notificationsChan, SecondaryNotificationChannel: &secondaryChan}
 	go queueService.PollFromQueue()
-	go queueService.ReadDataFromQueue()
+	//go queueService.ReadDataFromQueue()
 	telegramBot := b.NewBot(bot, &v, &redisDB, &queueService, &emailService)
 	go telegramBot.Read(v)
 	go telegramBot.ReadFromQueue(&secondaryChan)
