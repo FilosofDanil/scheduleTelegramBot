@@ -42,7 +42,7 @@ func GetInstance() *Configurations {
 	if instantiated == nil {
 		//read the configs and put it in the struct
 		viper.SetConfigName("configs")
-		viper.AddConfigPath("./configs")
+		viper.AddConfigPath("./app/configs")
 		viper.AutomaticEnv()
 		viper.SetConfigType("yml")
 		if err := viper.ReadInConfig(); err != nil {

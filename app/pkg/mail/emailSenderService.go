@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"net/smtp"
-	"schedulerTelegramBot/configs"
+	"schedulerTelegramBot/app/configs"
 )
 
 type EmailSender struct {

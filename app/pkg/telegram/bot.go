@@ -3,7 +3,7 @@ package telegram
 import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
-	"schedulerTelegramBot/internal/redisRepo"
+	"schedulerTelegramBot/app/pkg/redisRepo"
 )
 
 type KeyboardBuilder interface {

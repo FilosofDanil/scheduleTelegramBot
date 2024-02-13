@@ -4,8 +4,8 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
-	"schedulerTelegramBot/internal/queue"
-	"schedulerTelegramBot/internal/redisRepo"
+	"schedulerTelegramBot/app/pkg/queue"
+	"schedulerTelegramBot/app/pkg/redisRepo"
 	"time"
 )
 

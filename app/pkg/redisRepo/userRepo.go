@@ -3,7 +3,7 @@ package redisRepo
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
-	"schedulerTelegramBot/configs"
+	"schedulerTelegramBot/app/configs"
 	"strconv"
 )
 
